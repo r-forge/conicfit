@@ -1,4 +1,5 @@
 
+
 Residuals.parabola <- function(XY,ParG)
 {
 #   Projecting a given set of points onto a parabola and computing the distances from the points to the parabola
@@ -1047,3 +1048,117 @@ P <- mldivide(cbind(XY,1), matrix(XY[,1]^2 + XY[,2]^2,ncol=1))
 Pout = cbind(P[1]/2 , P[2]/2 , sqrt((P[1]^2+P[2]^2)/4+P[3]))
 Pout
 }
+
+# http://en.wikipedia.org/wiki/Ellipse#Mathematical_definitions_and_properties
+ellipticity <- function(minorAxis,majorAxis) 1 - (minorAxis/majorAxis) # ellipticity = flattening factor
+ellipseEccentricity <- function(minorAxis,majorAxis) (sqrt (1 - (minorAxis/majorAxis)^2)) # eccentricity of the ellipse
+ellipseFocus <- function(minorAxis,majorAxis) sqrt(minorAxis-majorAxis)^2 # focus of the ellipse
+ellipseRa <- function(minorAxis,majorAxis) (1+ellipseEccentricity(minorAxis,majorAxis))*majorAxis # radius at apoapsis (the farthest distance)
+ellipseRp <- function(minorAxis,majorAxis) (1-ellipseEccentricity(minorAxis,majorAxis))*majorAxis # radius at periapsis (the closest distance)
+ellipse.l <- function(minorAxis,majorAxis)
+{# semi-latus rectum l
+ra <- ellipseRa(minorAxis,majorAxis)
+rp <- ellipseRp(minorAxis,majorAxis)
+2*ra*rp/(ra+rp)
+}
+
+
+conic2parametric<-function(A, bv, cv){
+# Diagonalise A - find Q, D such at A = Q' * D * Q
+# Copyright Richard Brown, this code can be freely used and modified so
+# long as this line is retained
+# FITELLIPSE : Least squares ellipse fitting demonstration
+# Richard Brown, May 28, 2007
+# http://www.mathworks.com/matlabcentral/fileexchange/15125-fitellipse-m/content/demo/html/ellipsedemo.html
+eTMP<-eigen(A)
+D<-diag(eTMP$values)
+Q<-eTMP$vectors
+Q<-t(Q)
+# If the determinant < 0, it's not an ellipse
+if (prod(diag(D)) <= 0 )  stop('Linear fit did not produce an ellipse')
+# We have b_h' = 2 * t' * A + b'
+tV = -0.5 * mldivide(A , bv)
+c_h = matrix(tV,1) %*% A %*% tV + t(bv) %*% tV + cv
+list(z = tV,a = sqrt(-c_h / D[1,1]),b = sqrt(-c_h / D[2,2]),alpha = atan2(Q[1,2], Q[1,1]))
+}
+
+fitbookstein<-function(x){
+#FITBOOKSTEIN   Linear ellipse fit using bookstein constraint
+#   lambda_1^2 + lambda_2^2 = 1, where lambda_i are the eigenvalues of A
+# Copyright Richard Brown, this code can be freely used and modified so
+# long as this line is retained
+# FITELLIPSE : Least squares ellipse fitting demonstration
+# Richard Brown, May 28, 2007
+# http://www.mathworks.com/matlabcentral/fileexchange/15125-fitellipse-m/content/demo/html/ellipsedemo.html
+# W. Gander, G. H. Golub, R. Strebel, 1994
+# Least-Squares Fitting of Circles and Ellipses
+# BIT Numerical Mathematics, Springer 
+# Convenience variables
+m  = dim(x)[1]
+x1 = x[, 1]
+x2 = x[, 2]
+# Define the coefficient matrix B, such that we solve the system
+# B *[v; w] = 0, with the constraint norm(w) == 1
+B = cbind(x1, x2, rep(1,m), x1^2, sqrt(2) * x1 * x2, x2^2)
+# To enforce the constraint, we need to take the QR decomposition
+qTMP<-qr(B)
+R<-qr.R(qTMP)
+Q<-qr.Q(qTMP)
+# Decompose R into blocks
+R11 = R[1:3, 1:3]
+R12 = R[1:3, 4:6]
+R22 = R[4:6, 4:6]
+# Solve R22 * w = 0 subject to norm(w) == 1
+svdTMP<-svd(R22)
+U<-svdTMP[["u"]]
+S<-diag(svdTMP[["d"]])
+V<-svdTMP[["v"]]
+w = matrix(V[, 3],3,1)
+# Solve for the remaining variables
+v = mldivide(-R11 , R12) %*% w
+# Fill in the quadratic form
+A        = matrix(0,2,2)
+A[1]     = w[1]
+A[2:3] = 1 / sqrt(2) * w[2]
+A[4]     = w[3]
+bv       = v[1:2]
+c1        = v[3]
+# Find the parameters
+cTMP<-conic2parametric(A, bv, c1)
+list(z=cTMP$z, a=cTMP$a, b=cTMP$b, alpha=cTMP$alpha)
+}
+
+fitggk<-function(x){
+# Linear least squares with the Euclidean-invariant constraint Trace(A) = 1
+# Copyright Richard Brown, this code can be freely used and modified so
+# long as this line is retained
+# FITELLIPSE : Least squares ellipse fitting demonstration
+# Richard Brown, May 28, 2007
+# http://www.mathworks.com/matlabcentral/fileexchange/15125-fitellipse-m/content/demo/html/ellipsedemo.html
+# W. Gander, G. H. Golub, R. Strebel, 1994
+# Least-Squares Fitting of Circles and Ellipses
+# BIT Numerical Mathematics, Springer 
+# Convenience variables
+m  = dim(x)[1]
+x1 = x[, 1]
+x2 = x[, 2]
+# Coefficient matrix
+B = cbind(2 * x1 * x2, x2^2 - x1^2, x1, x2, rep(1,m))
+v = mldivide(B , -x1^2)
+# For clarity, fill in the quadratic form variables
+A        = matrix(0,2,2)
+A[1]     = 1-v[2]
+A[2:3] = v[1]
+A[2,2]     = v[2]
+bv       = v[3:4]
+c1        = v[5]
+# Find the parameters
+cTMP<-conic2parametric(A, bv, c1)
+list(z=cTMP$z, a=cTMP$a, b=cTMP$b, alpha=cTMP$alpha)
+}
+
+
+
+
+
+

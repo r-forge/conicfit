@@ -1,7 +1,7 @@
 Package: conicfit
 Type: Package
-Title: Algorithms for fitting circles, ellipses and conics based on the work by Prof. Nikolai Chernov.
-Version: 1.0.1
+Title: Algorithms For Fitting Circles, Ellipses And Conics Based On The Work By Prof. Nikolai Chernov
+Version: 1.0.2
 Encoding: UTF-8
 Authors@R: c(person(given = "Jose", family = "Gama", role = c("aut","cre"),email = "rxprtgama@gmail.com"),
     person(given = "Nikolai", family = "Chernov", role = c("aut","cph")))

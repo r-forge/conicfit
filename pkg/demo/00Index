@@ -2,3 +2,4 @@ conicfit.quicktest	example of fit.conicLMA and fit.ellipseLMG
 conicfit.test1	testing all the functions related to fit.conicLMA and fit.ellipseLMG
 conicfit.circles	example of circle fitting methods with graphic output
 conicfit.ellipses	example of ellipse fitting methods with graphic output
+booksteindemo	example of Algebraic linear Bookstein method
