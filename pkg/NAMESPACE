@@ -1,2 +1,3 @@
 import(pracma, geigen)
 exportPattern("^[[:alpha:]%]+")
+importFrom("stats", "runif")
