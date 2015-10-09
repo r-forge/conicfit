@@ -3,7 +3,7 @@ set.seed(0)
 # 50 points from an ellipse at c(0,0) with axis (200, 100), angle 45 degrees
 a<-calculateEllipse(0,0,200,100,45,50)
 plot(a[,1],a[,2],xlim=c(-250,250),ylim=c(-250,250),type='l');par(new=TRUE)
-plot(0,0,xlim=c(-250,250),ylim=c(-250,250),pch=4);par(new=TRUERUE) # plot the center with an X
+plot(0,0,xlim=c(-250,250),ylim=c(-250,250),pch=4);par(new=TRUE) # plot the center with an X
 # 50 points from an ellipse at c(0,0) with axis (200, 100), angle 45 degrees, positioned by uniform random distribution, noise=normal random distribution with sd=50
 xy<-calculateEllipse(0,0,200,100,45,50, randomDist=TRUE,noiseFun=function(x) (x+rnorm(1,mean=0,sd=50)))
 plot(xy[,1],xy[,2],xlim=c(-250,250),ylim=c(-250,250),col='magenta');par(new=TRUE)
